@@ -40,12 +40,13 @@ import (
 )
 
 const (
-	DEFAULT_CONFIG_FILE = ".didthis/config.json"
+	defaultConfigFile = ".didthis/config.json"
 )
 
 var (
 	cfgFile  string
 	logLevel string
+	cfg      *Config
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +62,19 @@ can be listed back out for daily next day reporting.
 	didthis yesterday
 
 `,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		l, err := log.ParseLevel(logLevel)
+		if err != nil {
+			fmt.Printf("error setting log level : %v", err)
+			os.Exit(1)
+		}
+		log.SetLevel(l)
+
+		cfg = loadConfig()
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		cfg.SaveConfig()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -78,7 +92,7 @@ func init() {
 		log.Fatalf("error discerning homedir : %v", err)
 	}
 
-	cfgFile = fmt.Sprintf("%s/%s", hd, DEFAULT_CONFIG_FILE)
+	cfgFile = fmt.Sprintf("%s/%s", hd, defaultConfigFile)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "log level")
