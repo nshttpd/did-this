@@ -29,7 +29,7 @@
 
 package main
 
-import "github.com/nshttpd/didthis/cmd"
+import "github.com/nshttpd/did-this/cmd"
 
 func main() {
 	cmd.Execute()
