@@ -35,6 +35,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/coreos/bbolt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
@@ -70,7 +71,17 @@ can be listed back out for daily next day reporting.
 		}
 		log.SetLevel(l)
 
+		// load the config. this will also have a handle to the Bolt DB
 		cfg = loadConfig()
+
+		err = cfg.Db.Update(func(tx *bolt.Tx) error {
+			_, err := tx.CreateBucketIfNotExists(cfg.CurrentDate())
+			return err
+		})
+
+		if err != nil {
+			log.WithField("error", err).Fatal("error creating daily DB bucket")
+		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		cfg.SaveConfig()

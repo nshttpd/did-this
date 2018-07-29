@@ -6,16 +6,23 @@ import (
 	"os"
 	"strings"
 
+	"fmt"
+
+	"time"
+
+	"github.com/coreos/bbolt"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	latestVersion = 1
+	defaultDbName = "did-this.db"
 )
 
 type Config struct {
-	Version int    `json:"version,omitempty"`
-	DbPath  string `json:"dbPath"`
+	Version int      `json:"version,omitempty"`
+	DbPath  string   `json:"dbPath"`
+	Db      *bolt.DB `json:"-"`
 }
 
 func loadConfig() *Config {
@@ -42,11 +49,24 @@ func loadConfig() *Config {
 		}
 	}
 
+	dbFile := fmt.Sprintf("%s/%s", c.DbPath, defaultDbName)
+
+	var err error
+	c.Db, err = bolt.Open(dbFile, 0600, &bolt.Options{Timeout: 1 * time.Second})
+
+	if err != nil {
+		log.WithFields(log.Fields{"dbFile": dbFile, "error": err}).Fatal("error opening DB file")
+	}
+
 	return c
 
 }
 
 func (c *Config) SaveConfig() {
+	err := c.Db.Close()
+	if err != nil {
+		log.WithField("error", err).Fatal("error closing DB file")
+	}
 	sl := log.WithField("cfgfile", cfgFile)
 	if cf, err := json.Marshal(c); err != nil {
 		sl.WithField("error", err).Error("error marshalling config file")
@@ -57,4 +77,9 @@ func (c *Config) SaveConfig() {
 			sl.Debug("saved config file")
 		}
 	}
+}
+
+func (c *Config) CurrentDate() []byte {
+	t := time.Now()
+	return []byte(fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day()))
 }
