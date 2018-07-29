@@ -41,7 +41,7 @@ import (
 )
 
 const (
-	defaultConfigFile = ".didthis/config.json"
+	defaultConfigFile = ".did-this/config.json"
 )
 
 var (
