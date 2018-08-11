@@ -41,13 +41,17 @@ import (
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "list out the things that you've done",
+	Long: `List out those things that you have done to report into whatever
+you have to. Default is to list what you did yesterday. Use the keyword 'today'
+to remind yourself what you've been doing. Provide a date to get those thing
+that you did in the past. Examples:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	did-this list
+	did-this list today
+	did-this list 2018-04-15
+
+The date format is that of YYYY-MM-DD for getting specific dates.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
 		var date []byte
@@ -63,7 +67,7 @@ to quickly create a Cobra application.`,
 
 			if b != nil {
 				b.ForEach(func(k, v []byte) error {
-					fmt.Printf("02d - %s\n", btoi(k), v)
+					fmt.Printf("%02d - %s\n", btoi(k), v)
 					return nil
 				})
 			}
