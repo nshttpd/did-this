@@ -30,42 +30,53 @@
 package cmd
 
 import (
+	"fmt"
+
 	"encoding/binary"
 
-	"strings"
-
 	"github.com/coreos/bbolt"
-
 	"github.com/spf13/cobra"
 )
 
-// addCmd represents the add command
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a done task for today",
-	Long: `Add in a done task for the day that you want to be able to report on tomorrow
-to say that you've actually done something.
+// listCmd represents the list command
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "A brief description of your command",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
 
-	did-this add "I did something sort of cool today"
-
-`,
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg.Db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket(cfg.CurrentDate())
-			id, _ := b.NextSequence()
+		fmt.Println("list called")
+		var date []byte
+		if len(args) == 0 {
+			date = cfg.PreviousDate()
+		} else {
+			if args[0] == "today" {
+				date = cfg.CurrentDate()
+			}
+		}
+		cfg.Db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket(date)
 
-			return b.Put(itob(id), []byte(strings.Join(args, " ")))
+			if b != nil {
+				b.ForEach(func(k, v []byte) error {
+					fmt.Printf("02d - %s\n", btoi(k), v)
+					return nil
+				})
+			}
+			return nil
 		})
 
 	},
 }
 
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
+func btoi(v []byte) uint64 {
+	return binary.BigEndian.Uint64(v)
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(listCmd)
 }
