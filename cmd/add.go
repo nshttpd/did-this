@@ -30,8 +30,9 @@
 package cmd
 
 import (
-	"fmt"
+	"encoding/binary"
 
+	"github.com/coreos/bbolt"
 	"github.com/spf13/cobra"
 )
 
@@ -46,8 +47,19 @@ to say that you've actually done something.
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("add called")
+		cfg.Db.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket(cfg.CurrentDate())
+			id, _ := b.NextSequence()
+			return b.Put(itob(id), []byte(args[0]))
+		})
+
 	},
+}
+
+func itob(v uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, v)
+	return b
 }
 
 func init() {

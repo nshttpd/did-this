@@ -83,3 +83,8 @@ func (c *Config) CurrentDate() []byte {
 	t := time.Now()
 	return []byte(fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day()))
 }
+
+func (c *Config) PreviousDate() []byte {
+	t := time.Now().Add(-time.Hour * 24)
+	return []byte(fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day()))
+}
