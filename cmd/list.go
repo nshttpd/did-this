@@ -79,7 +79,7 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 			b := tx.Bucket(date)
 
 			if b != nil {
-				if slack == true {
+				if slack {
 					fmt.Println("```")
 				}
 				b.ForEach(func(k, v []byte) error {
@@ -90,7 +90,7 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 				fmt.Println("Nothing found!")
 				os.Exit(1)
 			}
-			if slack == true {
+			if slack {
 				fmt.Println("```")
 			}
 			return nil
