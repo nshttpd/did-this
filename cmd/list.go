@@ -31,6 +31,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"encoding/binary"
 
@@ -53,7 +55,6 @@ that you did in the past. Examples:
 
 The date format is that of YYYY-MM-DD for getting specific dates.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
 		var date []byte
 		if len(args) == 0 {
 			date = cfg.PreviousDate()
@@ -61,15 +62,36 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 			if args[0] == "today" {
 				date = cfg.CurrentDate()
 			}
+			// check for date and assign to a byte slice
+			if len(date) == 0 {
+				_, err := time.Parse("2006-01-02", args[0])
+
+				if err != nil {
+					fmt.Println("date formatting is wrong.")
+					os.Exit(1)
+				} else {
+					date = []byte(args[0])
+				}
+			}
 		}
+
 		cfg.Db.View(func(tx *bolt.Tx) error {
 			b := tx.Bucket(date)
 
 			if b != nil {
+				if slack == true {
+					fmt.Println("```")
+				}
 				b.ForEach(func(k, v []byte) error {
 					fmt.Printf("%02d - %s\n", btoi(k), v)
 					return nil
 				})
+			} else {
+				fmt.Println("Nothing found!")
+				os.Exit(1)
+			}
+			if slack == true {
+				fmt.Println("```")
 			}
 			return nil
 		})
@@ -82,5 +104,6 @@ func btoi(v []byte) uint64 {
 }
 
 func init() {
+	rootCmd.Flags().BoolP("slack", "s", false, "slack formatting")
 	rootCmd.AddCommand(listCmd)
 }
