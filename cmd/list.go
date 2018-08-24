@@ -104,6 +104,5 @@ func btoi(v []byte) uint64 {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("slack", "s", false, "slack formatting")
 	rootCmd.AddCommand(listCmd)
 }
