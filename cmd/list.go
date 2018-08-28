@@ -53,7 +53,6 @@ that you did in the past. Examples:
 
 The date format is that of YYYY-MM-DD for getting specific dates.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
 		var date []byte
 		if len(args) == 0 {
 			date = cfg.PreviousDate()
