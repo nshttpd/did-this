@@ -34,6 +34,9 @@ import (
 
 	"encoding/binary"
 
+	"os"
+	"time"
+
 	"github.com/coreos/bbolt"
 	"github.com/spf13/cobra"
 )
@@ -59,6 +62,13 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 		} else {
 			if args[0] == "today" {
 				date = cfg.CurrentDate()
+			} else {
+				_, err := time.Parse("2006-01-02", args[0])
+				if err != nil {
+					fmt.Println("invalid data format.")
+					os.Exit(1)
+				}
+				date = []byte(args[0])
 			}
 		}
 		cfg.Db.View(func(tx *bolt.Tx) error {
