@@ -47,6 +47,7 @@ const (
 var (
 	cfgFile  string
 	logLevel string
+	slack    bool
 	cfg      *Config
 )
 
@@ -107,4 +108,5 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "log level")
+	rootCmd.PersistentFlags().BoolVarP(&slack, "slack", "s", false, "Slack formatting")
 }
