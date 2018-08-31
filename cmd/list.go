@@ -30,9 +30,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"encoding/binary"
+	"fmt"
+	"html/template"
 
 	"os"
 	"time"
@@ -40,6 +40,13 @@ import (
 	"github.com/coreos/bbolt"
 	"github.com/spf13/cobra"
 )
+
+const (
+	stdTmpl   = "{{ range . }}{{ .Count }} - {{ .Did }}\n{{ end }}"
+	slackTmpl = "```\n{{ range . }}{{ .Count }} - {{ .Did }}\n{{ end }}```\n"
+)
+
+var slack bool
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -74,11 +81,37 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 		cfg.Db.View(func(tx *bolt.Tx) error {
 			b := tx.Bucket(date)
 
+			type done struct {
+				Count uint64
+				Did   string
+			}
+
+			var items []done
+
 			if b != nil {
 				b.ForEach(func(k, v []byte) error {
-					fmt.Printf("%02d - %s\n", btoi(k), v)
+					items = append(items, done{btoi(k), string(v)})
 					return nil
 				})
+				var t *template.Template
+				var err error
+
+				if !slack {
+					t, err = template.New("list").Parse(stdTmpl)
+				} else {
+					t, err = template.New("list").Parse(slackTmpl)
+				}
+
+				if err != nil {
+					fmt.Printf("error parsing output template : %v", err)
+					os.Exit(1)
+				}
+				err = t.Execute(os.Stdout, items)
+				if err != nil {
+					fmt.Printf("error processing template : %v", err)
+					os.Exit(1)
+				}
+
 			}
 			return nil
 		})
@@ -92,4 +125,5 @@ func btoi(v []byte) uint64 {
 
 func init() {
 	rootCmd.AddCommand(listCmd)
+	listCmd.Flags().BoolVar(&slack, "slack", false, "output with slack preformat wrappers")
 }
