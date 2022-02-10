@@ -27,45 +27,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-package cmd
+package main
 
 import (
-	"encoding/binary"
-
-	"strings"
-
-	"github.com/coreos/bbolt"
-
-	"github.com/spf13/cobra"
+	cmd "github.com/nshttpd/did-this/internal/commands"
 )
 
-// addCmd represents the add command
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a done task for today",
-	Long: `Add in a done task for the day that you want to be able to report on tomorrow
-to say that you've actually done something.
-
-	did-this add "I did something sort of cool today"
-
-`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg.Db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket(cfg.CurrentDate())
-			id, _ := b.NextSequence()
-
-			return b.Put(itob(id), []byte(strings.Join(args, " ")))
-		})
-
-	},
-}
-
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
-}
-
-func init() {
-	rootCmd.AddCommand(addCmd)
+func main() {
+	cmd.Execute()
 }

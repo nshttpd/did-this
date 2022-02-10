@@ -27,10 +27,75 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-package main
+package commands
 
-import "github.com/nshttpd/did-this/cmd"
+import (
+	"fmt"
+	bolt "go.etcd.io/bbolt"
+	"time"
 
-func main() {
-	cmd.Execute()
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+const RETENTION = 30
+
+var purgeRetentionVar int
+
+// purgeCmd represents the purge command
+var purgeCmd = &cobra.Command{
+	Use:   "purge",
+	Short: "purge out old completed stored tasks",
+	Long: `Loop through the database and purge out old daily buckets
+of data. Default retention period is 30 days. Can be overridden on the
+command line.
+
+	did-this purge
+
+this is destructive and no backup of data is made.`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		var purge [][]byte
+		now := time.Now()
+
+		err := cfg.Db.View(func(tx *bolt.Tx) error {
+			return tx.ForEach(func(name []byte, _ *bolt.Bucket) error {
+				d, err := time.Parse("2006-01-02", string(name))
+				if err != nil {
+					return fmt.Errorf("error parsing time from bucket : %s", string(name))
+				}
+
+				if d.Before(now.AddDate(0, 0, -purgeRetentionVar)) {
+					purge = append(purge, name)
+				}
+				return nil
+			})
+		})
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if len(purge) > 0 {
+			err := cfg.Db.Update(func(tx *bolt.Tx) error {
+				for _, b := range purge {
+					if e := tx.DeleteBucket(b); e != nil {
+						return e
+					}
+					fmt.Printf("purged : %s\n", string(b))
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(purgeCmd)
+	purgeCmd.Flags().IntVar(&purgeRetentionVar, "retention", RETENTION,
+		"retention days for completed tasks")
 }

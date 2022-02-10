@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"encoding/json"
@@ -10,8 +10,8 @@ import (
 
 	"time"
 
-	"github.com/coreos/bbolt"
 	log "github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (

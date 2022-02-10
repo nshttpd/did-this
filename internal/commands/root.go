@@ -27,16 +27,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-package cmd
+package commands
 
 import (
 	"fmt"
+	"github.com/mitchellh/go-homedir"
+	bolt "go.etcd.io/bbolt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/coreos/bbolt"
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -52,15 +52,15 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "didthis",
+	Use:   "did-this",
 	Short: "task completion tracking app",
 	Long: `A command line task completion tracking app. Added completed
 tasks will end up in a bucket based on the date they are added. All tasks
 can be listed back out for daily next day reporting.
 
-	didthis add "this is something I did today"
-	didthis list
-	didthis yesterday
+	did-this add "this is something I did today"
+	did-this list
+	did-this yesterday
 
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {

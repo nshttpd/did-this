@@ -27,14 +27,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-package cmd
+package commands
 
 import (
 	"fmt"
+	bolt "go.etcd.io/bbolt"
 
 	"os"
 
-	"github.com/coreos/bbolt"
 	"github.com/spf13/cobra"
 )
 
