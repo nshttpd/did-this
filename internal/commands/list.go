@@ -42,8 +42,8 @@ import (
 )
 
 const (
-	stdTmpl   = "{{ range . }}{{ .Count }} - {{ .Did }}\n{{ end }}"
-	slackTmpl = "```\n{{ range . }}{{ .Count }} - {{ .Did }}\n{{ end }}```\n"
+	stdTmpl   = "{{ range . }}* {{ .Did }}\n{{ end }}"
+	slackTmpl = "```\n{{ range . }}* {{ .Did }}\n{{ end }}```\n"
 )
 
 var slack bool
@@ -72,7 +72,7 @@ The date format is that of YYYY-MM-DD for getting specific dates.`,
 			} else {
 				_, err := time.Parse("2006-01-02", args[0])
 				if err != nil {
-					fmt.Println("invalid data format.")
+					fmt.Println("invalid date format.")
 					os.Exit(1)
 				}
 				date = []byte(args[0])
