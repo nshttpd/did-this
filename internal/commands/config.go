@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"fmt"
@@ -25,7 +26,45 @@ type Config struct {
 	Db      *bolt.DB `json:"-"`
 }
 
+// validateConfigPath ensures the config file path is safe and within expected boundaries
+func validateConfigPath(path string) error {
+	// Get absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("invalid config path: %w", err)
+	}
+
+	// Clean the path to remove any .. or other traversal attempts
+	cleanPath := filepath.Clean(absPath)
+
+	// Ensure the path is in the user's home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
+
+	// Check if the clean path starts with the home directory
+	if !strings.HasPrefix(cleanPath, homeDir) {
+		return fmt.Errorf("config file must be within home directory")
+	}
+
+	// Ensure it's not a system-critical file
+	systemPaths := []string{"/etc/", "/bin/", "/sbin/", "/usr/bin/", "/usr/sbin/", "/var/"}
+	for _, sysPath := range systemPaths {
+		if strings.HasPrefix(cleanPath, sysPath) {
+			return fmt.Errorf("config file cannot be in system directory")
+		}
+	}
+
+	return nil
+}
+
 func loadConfig() *Config {
+	// Validate config file path before using it
+	if err := validateConfigPath(cfgFile); err != nil {
+		log.WithFields(log.Fields{"cfgFile": cfgFile, "error": err}).Fatal("invalid config file path")
+	}
+
 	c := &Config{}
 	if cf, err := ioutil.ReadFile(cfgFile); err != nil {
 		if os.IsNotExist(err) {
@@ -33,7 +72,7 @@ func loadConfig() *Config {
 			c.DbPath = strings.Join(p[0:len(p)-1], string(os.PathSeparator))
 			// make sure the directory exists and if not create it
 			if _, err := ioutil.ReadDir(c.DbPath); err != nil {
-				err := os.MkdirAll(c.DbPath, 0755)
+				err := os.MkdirAll(c.DbPath, 0700)
 				if err != nil {
 					log.WithFields(log.Fields{"dbPath": c.DbPath, "error": err}).Fatal("error creating db dir")
 				}

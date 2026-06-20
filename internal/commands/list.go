@@ -1,4 +1,4 @@
-// Copyright © 2018 Steve Brunton <sbrunton@gmail.com>
+// Copyright © 2025 Steve Brunton <sbrunton at gmail.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	bolt "go.etcd.io/bbolt"
-	"html/template"
+	"text/template"
 
 	"os"
 	"time"
