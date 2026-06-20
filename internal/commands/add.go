@@ -1,4 +1,4 @@
-// Copyright © 2018 Steve Brunton <sbrunton@gmail.com>
+// Copyright © 2026 Steve Brunton <sbrunton at gmail.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,17 @@ package commands
 
 import (
 	"encoding/binary"
+	"fmt"
 	bolt "go.etcd.io/bbolt"
+	"os"
 
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+const maxTaskLength = 10240 // 10KB max per task
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -49,13 +54,36 @@ to say that you've actually done something.
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg.Db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket(cfg.CurrentDate())
-			id, _ := b.NextSequence()
+		taskDescription := strings.Join(args, " ")
 
-			return b.Put(itob(id), []byte(strings.Join(args, " ")))
+		// Validate input length to prevent disk exhaustion
+		if len(taskDescription) > maxTaskLength {
+			fmt.Printf("error: task description exceeds maximum length of %d bytes\n", maxTaskLength)
+			os.Exit(1)
+		}
+
+		if len(taskDescription) == 0 {
+			fmt.Println("error: task description cannot be empty")
+			os.Exit(1)
+		}
+
+		err := cfg.Db.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket(cfg.CurrentDate())
+			if b == nil {
+				return fmt.Errorf("bucket for current date not found")
+			}
+
+			id, err := b.NextSequence()
+			if err != nil {
+				return fmt.Errorf("error generating sequence ID: %w", err)
+			}
+
+			return b.Put(itob(id), []byte(taskDescription))
 		})
 
+		if err != nil {
+			log.WithField("error", err).Fatal("error adding task")
+		}
 	},
 }
 
